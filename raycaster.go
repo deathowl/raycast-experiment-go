@@ -290,6 +290,22 @@ func frame() *image.RGBA {
 		}
 	}
 
+	cursor := textures.RGBAAt(
+		200,
+		200,
+	)
+	cursor.R = 30
+	cursor.G = 30
+	cursor.B = 30
+
+	for i := 2; i < 5; i++ {
+		m.Set(width/2-i, height/2, cursor)
+		m.Set(width/2+i, height/2, cursor)
+		m.Set(width/2, height/2+i, cursor)
+		m.Set(width/2, height/2-i, cursor)
+
+	}
+
 	return m
 }
 
@@ -385,7 +401,6 @@ func (as actionSquare) set(n int) {
 
 func (as actionSquare) execute() {
 	if as.active {
-		fmt.Println(selected)
 		world[as.X][as.Y] = selected
 	}
 }
@@ -439,13 +454,24 @@ func run() {
 			moveRight(3.5 * dt)
 		}
 
-		if win.Pressed(pixelgl.KeyRight) {
-			turnRight(1.2 * dt)
+		movedX := win.MousePosition().X - win.MousePreviousPosition().X
+
+		if movedX > 0 {
+			lookRight(movedX * dt * 0.5)
+		}
+		if movedX < 0 {
+			lookLeft(movedX * dt * -0.5)
 		}
 
-		if win.Pressed(pixelgl.KeyLeft) {
-			turnLeft(1.2 * dt)
+		/*
+		movedY := win.MousePosition().X - win.MousePreviousPosition().X
+
+		if movedY > 0 {
+			lookUp(movedY * dt * 0.5)
 		}
+		if movedY < 0 {
+			lookDown(movedY * dt * -0.5)
+		}*/
 
 		if win.JustPressed(pixelgl.KeyM) {
 			showMap = !showMap
@@ -562,7 +588,7 @@ func moveRight(s float64) {
 	}
 }
 
-func turnRight(s float64) {
+func lookRight(s float64) {
 	oldDirX := dir.X
 
 	dir.X = dir.X*math.Cos(-s) - dir.Y*math.Sin(-s)
@@ -574,7 +600,7 @@ func turnRight(s float64) {
 	plane.Y = oldPlaneX*math.Sin(-s) + plane.Y*math.Cos(-s)
 }
 
-func turnLeft(s float64) {
+func lookLeft(s float64) {
 	oldDirX := dir.X
 
 	dir.X = dir.X*math.Cos(s) - dir.Y*math.Sin(s)
@@ -585,6 +611,8 @@ func turnLeft(s float64) {
 	plane.X = plane.X*math.Cos(s) - plane.Y*math.Sin(s)
 	plane.Y = oldPlaneX*math.Sin(s) + plane.Y*math.Cos(s)
 }
+
+
 
 func main() {
 	flag.BoolVar(&fullscreen, "f", fullscreen, "fullscreen")
