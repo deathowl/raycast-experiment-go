@@ -8,14 +8,23 @@ import (
 	"image/draw"
 	"image/png"
 	"math"
+	"math/rand"
 	"os"
 	"time"
 
+	"github.com/aquilax/go-perlin"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
+	wr "github.com/mroth/weightedrand"
 )
 
-const texSize = 64
+const (
+	texSize       = 64
+	alpha         = 2.
+	beta          = 2.
+	n             = 3
+	seed    int64 = 100
+)
 
 var (
 	fullscreen   = false
@@ -58,7 +67,55 @@ func setup() {
 	plane = pixel.V(0.0, 0.66)
 }
 
-var world = [24][24]int{
+func genWorld(size int64) *[][]int {
+	rand.Seed(time.Now().UTC().UnixNano())
+	world := make([][]int, size)
+	p := perlin.NewPerlin(alpha, beta, n, seed)
+	caveMaterial := -1
+	for x := 0.; x <= float64(size-int64(1)); x++ {
+		world[int(x)] = make([]int, size)
+		for y := 0.; y <= float64(size-int64(1)); y++ {
+			intx := int64(x)
+			inty := int64(y)
+			if intx == 0 || inty == 0 || intx == size-int64(1) || inty == size-int64(1) {
+				world[intx][inty] = 1
+			} else if (intx > size/2-int64(2) || intx > size/2+int64(2)) && (inty < size/2-int64(2) || inty > size/2+int64(2)) {
+				world[intx][inty] = 0
+			} else {
+				noise := p.Noise2D(x/float64(10), y/float64(10))
+
+				fmt.Printf("%0.0f\t%0.0f\t%0.4f\n", x, y, noise)
+				if math.Abs(noise) > 0.2 {
+					if caveMaterial == -1 {
+						c := wr.NewChooser(
+							wr.Choice{Item: 2, Weight: 1},
+							wr.Choice{Item: 3, Weight: 1},
+							wr.Choice{Item: 4, Weight: 1},
+							wr.Choice{Item: 5, Weight: 1},
+							wr.Choice{Item: 6, Weight: 1},
+							wr.Choice{Item: 7, Weight: 1},
+							wr.Choice{Item: 8, Weight: 1},
+							wr.Choice{Item: 9, Weight: 1},
+						)
+						caveMaterial = c.Pick().(int)
+
+					}
+					fmt.Println("Cave")
+					world[intx][inty] = caveMaterial
+				} else {
+					caveMaterial = -1
+					world[intx][inty] = 0
+				}
+			}
+
+		}
+	}
+	return &world
+}
+
+var world = *genWorld(1000)
+
+/*var world = [25][24]int{
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
 	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
@@ -82,8 +139,9 @@ var world = [24][24]int{
 	{1, 4, 0, 4, 4, 4, 4, 4, 4, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 5, 0, 5, 0, 1},
 	{1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 0, 0, 0, 0, 1},
 	{1, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-}
+}*/
 
 func loadTextures() *image.RGBA {
 	infile, err := os.Open("assets/tiles.png")
@@ -311,19 +369,29 @@ func frame() *image.RGBA {
 
 func minimap() *image.RGBA {
 	m := image.NewRGBA(image.Rect(0, 0, 24, 26))
+	startx := math.Max(0., pos.X-float64(12))
+	starty := math.Max(0., pos.Y-float64(13))
+	endx:= 24.
+	endy := 26.
+	if startx != 0. {
+		endx = pos.X + float64(12)
+	}
+	if starty != 0 {
+		endy = pos.Y + float64(13)
+	}
 
-	for x, row := range world {
-		for y, _ := range row {
-			c := getColor(x, y)
+	for x := startx; x < endx; x++ {
+		for y := starty; y < endy; y++ {
+			c := getColor(int(x), int(y))
 			if c.A == 255 {
 				c.A = 96
 			}
-			m.Set(x, y, c)
+			m.Set(int(x), int(y), c)
 		}
 	}
 
-	m.Set(int(pos.X), int(pos.Y), color.RGBA{255, 0, 0, 255})
-
+	m.Set(int(pos.X)/2, int(pos.Y)/2, color.RGBA{255, 0, 0, 255})
+	fmt.Println(as.X, as.Y)
 	if as.active {
 		m.Set(as.X, as.Y, color.RGBA{255, 255, 255, 255})
 	} else {
@@ -464,14 +532,14 @@ func run() {
 		}
 
 		/*
-		movedY := win.MousePosition().X - win.MousePreviousPosition().X
+			movedY := win.MousePosition().X - win.MousePreviousPosition().X
 
-		if movedY > 0 {
-			lookUp(movedY * dt * 0.5)
-		}
-		if movedY < 0 {
-			lookDown(movedY * dt * -0.5)
-		}*/
+			if movedY > 0 {
+				lookUp(movedY * dt * 0.5)
+			}
+			if movedY < 0 {
+				lookDown(movedY * dt * -0.5)
+			}*/
 
 		if win.JustPressed(pixelgl.KeyM) {
 			showMap = !showMap
@@ -612,8 +680,6 @@ func lookLeft(s float64) {
 	plane.Y = oldPlaneX*math.Sin(s) + plane.Y*math.Cos(s)
 }
 
-
-
 func main() {
 	flag.BoolVar(&fullscreen, "f", fullscreen, "fullscreen")
 	flag.IntVar(&width, "w", width, "width")
@@ -625,6 +691,5 @@ func main() {
 	fmt.Println("Window created")
 
 	setup()
-
 	pixelgl.Run(run)
 }
