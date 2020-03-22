@@ -373,30 +373,31 @@ func minimap() *image.RGBA {
 	starty := math.Max(0., pos.Y-float64(13))
 	endx:= 24.
 	endy := 26.
-	if startx != 0. {
+	if startx != 0 {
 		endx = pos.X + float64(12)
 	}
 	if starty != 0 {
 		endy = pos.Y + float64(13)
 	}
-
+	
 	for x := startx; x < endx; x++ {
 		for y := starty; y < endy; y++ {
 			c := getColor(int(x), int(y))
 			if c.A == 255 {
 				c.A = 96
 			}
-			m.Set(int(x), int(y), c)
+			m.Set(int(x-startx), int(y-starty), c)
 		}
 	}
 
-	m.Set(int(pos.X)/2, int(pos.Y)/2, color.RGBA{255, 0, 0, 255})
-	fmt.Println(as.X, as.Y)
-	if as.active {
-		m.Set(as.X, as.Y, color.RGBA{255, 255, 255, 255})
-	} else {
-		m.Set(as.X, as.Y, color.RGBA{64, 64, 64, 255})
-	}
+
+	//m.Set(int(pos.X)/2, int(pos.Y)/2, color.RGBA{255, 0, 0, 255})
+	//fmt.Println(as.X, as.Y)
+	// if as.active {
+	// 	m.Set(as.X, as.Y, color.RGBA{255, 255, 255, 255})
+	// } else {
+	// 	m.Set(as.X, as.Y, color.RGBA{64, 64, 64, 255})
+	// }
 
 	return m
 }
@@ -491,6 +492,9 @@ func run() {
 	c := win.Bounds().Center()
 
 	last := time.Now()
+	minimaprefresh := time.Now()
+	minimapInit := true
+	var lastM *pixel.PictureData
 
 	mapRot := -1.6683362599999894
 
@@ -591,11 +595,19 @@ func run() {
 			Draw(win, pixel.IM.Moved(c).Scaled(c, scale))
 
 		if showMap {
+			dt := time.Since(minimaprefresh).Seconds()
 			m := pixel.PictureDataFromImage(minimap())
+			if minimapInit {
+				minimapInit = false
+				lastM = m
+			}
+			if dt > .5 {
+				lastM = m
+				minimaprefresh = time.Now()
+			}
+			mc := m.Bounds().Min.Add(pixel.V(-lastM.Rect.W(), lastM.Rect.H()))
 
-			mc := m.Bounds().Min.Add(pixel.V(-m.Rect.W(), m.Rect.H()))
-
-			pixel.NewSprite(m, m.Bounds()).
+			pixel.NewSprite(lastM, lastM.Bounds()).
 				Draw(win, pixel.IM.
 					Moved(mc).
 					Rotated(mc, mapRot).
