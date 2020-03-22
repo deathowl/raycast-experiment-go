@@ -103,7 +103,9 @@ func genWorld(size int64) *[][]int {
 					fmt.Println("Cave")
 					world[intx][inty] = caveMaterial
 				} else {
-					caveMaterial = -1
+					fmt.Println("DO SMART STUFF HERE")
+					//print()
+					//caveMaterial = -1
 					world[intx][inty] = 0
 				}
 			}
@@ -389,16 +391,14 @@ func minimap() *image.RGBA {
 			m.Set(int(x-startx), int(y-starty), c)
 		}
 	}
-
-
-	//m.Set(int(pos.X)/2, int(pos.Y)/2, color.RGBA{255, 0, 0, 255})
-	//fmt.Println(as.X, as.Y)
-	// if as.active {
-	// 	m.Set(as.X, as.Y, color.RGBA{255, 255, 255, 255})
-	// } else {
-	// 	m.Set(as.X, as.Y, color.RGBA{64, 64, 64, 255})
-	// }
-
+	//fmt.Println(startx)
+	//fmt.Println(pos.X)
+	m.Set(int(pos.X - startx), int(pos.Y - starty), color.RGBA{0, 255, 0, 180})
+	if as.active {
+		m.Set(as.X - int(startx), as.Y - int(starty), color.RGBA{255, 255, 255, 255})
+	} else {
+	 	m.Set(as.X - int(startx), as.Y - int(starty), color.RGBA{64, 64, 64, 255})
+	 }
 	return m
 }
 
@@ -440,7 +440,7 @@ func getActionSquare() actionSquare {
 	}
 
 	block := -1
-	active := pt.X > 0 && pt.X < 23 && pt.Y > 0 && pt.Y < 23
+	active := pt.X > 0 && pt.X < len(world)  && pt.Y > 0 && pt.Y < len(world[0])
 
 	if active {
 		block = world[pt.X][pt.Y]
