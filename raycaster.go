@@ -41,6 +41,8 @@ var (
 	pos, dir, plane pixel.Vec
 
 	textures = loadTextures()
+	frames = 0
+	second = time.Tick(time.Second)
 )
 
 //Typedfs
@@ -511,7 +513,7 @@ func run() {
 	cfg := pixelgl.WindowConfig{
 		Bounds:      pixel.R(0, 0, float64(width)*scale, float64(height)*scale),
 		VSync:       true,
-		Undecorated: true,
+		Undecorated: false,
 	}
 
 	if fullscreen {
@@ -657,7 +659,13 @@ func run() {
 				Moved(ic).
 				Rotated(ic, mapRot).
 				ScaledXY(pixel.ZV, pixel.V(-scale*2, scale*2)))
-
+		frames++
+		select {
+		case <-second:
+			win.SetTitle(fmt.Sprintf("ShootingGame | FPS: %d", frames))
+			frames = 0
+		default:
+		}
 		win.Update()
 	}
 }
