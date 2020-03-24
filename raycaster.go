@@ -29,10 +29,10 @@ const (
 var (
 	fullscreen   = false
 	showMap      = true
-	width        = 320
-	height       = 200
-	scale        = 3.0
-	wallDistance = 8.0
+	width        = 1280
+	height       = 1024
+	scale        = 1.0
+	wallDistance = 3.0
 
 	as       actionSquare
 	inv      Inventory
@@ -78,14 +78,16 @@ func genWorld(size int64) *[][]int {
 			intx := int64(x)
 			inty := int64(y)
 			if intx == 0 || inty == 0 || intx == size-int64(1) || inty == size-int64(1) {
+				//borders
 				world[intx][inty] = 1
 			} else if (intx > size/2-int64(2) || intx > size/2+int64(2)) && (inty < size/2-int64(2) || inty > size/2+int64(2)) {
+				//avoid spawning in blocks
 				world[intx][inty] = 0
 			} else {
+				//caves
 				noise := p.Noise2D(x/float64(10), y/float64(10))
 
-				fmt.Printf("%0.0f\t%0.0f\t%0.4f\n", x, y, noise)
-				if math.Abs(noise) > 0.2 {
+				if math.Abs(noise) >= 0.2 {
 					if caveMaterial == -1 {
 						c := wr.NewChooser(
 							wr.Choice{Item: 2, Weight: 1},
@@ -94,18 +96,21 @@ func genWorld(size int64) *[][]int {
 							wr.Choice{Item: 5, Weight: 1},
 							wr.Choice{Item: 6, Weight: 1},
 							wr.Choice{Item: 7, Weight: 1},
-							wr.Choice{Item: 8, Weight: 1},
-							wr.Choice{Item: 9, Weight: 1},
+							//wr.Choice{Item: 8, Weight: 1000},
+
 						)
 						caveMaterial = c.Pick().(int)
 
 					}
-					fmt.Println("Cave")
 					world[intx][inty] = caveMaterial
 				} else {
-					fmt.Println("DO SMART STUFF HERE")
-					//print()
-					//caveMaterial = -1
+					//look ahead 
+					// noisex := p.Noise2D(x+1/float64(10), y/float64(10))
+					// noisey := p.Noise2D(x/float64(10), y/float64(10))
+					// noisexy := p.Noise2D(x+1/float64(10), y+1/float64(10))
+					// if math.Abs(noisex) < .2 &&  math.Abs(noisey) < .2 &&  math.Abs(noisexy) < .2{
+					 	//caveMaterial = -1
+					// }
 					world[intx][inty] = 0
 				}
 			}
@@ -115,7 +120,29 @@ func genWorld(size int64) *[][]int {
 	return &world
 }
 
+func genEnemies(world [][]int, probability int) *[][]int {
+	rand.Seed(time.Now().UTC().UnixNano())
+	monsters := make([][]int, len(world))
+	for x := 0 ; x < len(world); x++ {
+		monsters[x] = make([]int, len(world))
+		for y := 0; y < len(world[x]); y++ {
+			if world[x][y] == 0 {
+				monsters[x][y] = 0
+				roll := rand.Intn(100)
+				fmt.Println(roll)
+				if roll < probability {
+					monsters[x][y] = 1
+				}
+			} 
+		}
+	}
+	fmt.Println(monsters)
+	return &monsters
+}
+
+
 var world = *genWorld(1000)
+var monsters = *genEnemies(world, 10)
 
 /*var world = [25][24]int{
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -158,7 +185,6 @@ func loadTextures() *image.RGBA {
 	}
 
 	m := image.NewRGBA(p.Bounds())
-
 	draw.Draw(m, m.Bounds(), p, image.ZP, draw.Src)
 	fmt.Println("Assets loaded successfully.")
 	return m
@@ -270,14 +296,14 @@ func frame() *image.RGBA {
 
 		lineHeight := int(float64(height) / perpWallDist)
 
-		if lineHeight < 1 {
-			lineHeight = 1
-		}
+		//if lineHeight < 1 {
+		//	lineHeight = 1
+		//}
 
 		drawStart := -lineHeight/2 + height/2
-		if drawStart < 0 {
-			drawStart = 0
-		}
+		//if drawStart < 0 {
+		//	drawStart = 0
+		//}
 
 		drawEnd := lineHeight/2 + height/2
 		if drawEnd >= height {
@@ -342,7 +368,6 @@ func frame() *image.RGBA {
 
 			fx := int(currentFloor.X*float64(texSize)) % texSize
 			fy := int(currentFloor.Y*float64(texSize)) % texSize
-
 			m.Set(x, y, textures.At(fx, fy))
 
 			m.Set(x, height-y-1, textures.At(fx+(4*texSize), fy))
@@ -365,12 +390,11 @@ func frame() *image.RGBA {
 		m.Set(width/2, height/2-i, cursor)
 
 	}
-
 	return m
 }
 
 func minimap() *image.RGBA {
-	m := image.NewRGBA(image.Rect(0, 0, 24, 26))
+	m := image.NewRGBA(image.Rect(0, 0, 120, 130))
 	startx := math.Max(0., pos.X-float64(12))
 	starty := math.Max(0., pos.Y-float64(13))
 	endx:= 24.
@@ -388,17 +412,26 @@ func minimap() *image.RGBA {
 			if c.A == 255 {
 				c.A = 96
 			}
-			m.Set(int(x-startx), int(y-starty), c)
+			for rx:=0; rx<=3; rx++ {
+				for ry:=0; ry<=3; ry++ { 
+					m.Set(3*int(x-startx)+int(x-startx)+rx , 3*int(y-starty)+int(y-starty)+ry, c)
+					m.Set(3*int(x-startx)+int(x-startx)-rx , 3*int(y-starty)+int(y-starty)-ry, c)
+					m.Set(3*int(x-startx)+int(x-startx)+rx , 3*int(y-starty)+int(y-starty)-ry, c)
+					m.Set(3*int(x-startx)+int(x-startx)-rx , 3*int(y-starty)+int(y-starty)+ry, c)
+				}
+			}
 		}
 	}
-	//fmt.Println(startx)
-	//fmt.Println(pos.X)
-	m.Set(int(pos.X - startx), int(pos.Y - starty), color.RGBA{0, 255, 0, 180})
-	if as.active {
-		m.Set(as.X - int(startx), as.Y - int(starty), color.RGBA{255, 255, 255, 255})
-	} else {
-	 	m.Set(as.X - int(startx), as.Y - int(starty), color.RGBA{64, 64, 64, 255})
-	 }
+
+	 for rx:=0; rx<=2; rx++ {
+	 	for ry:=0; ry<=2; ry++ { 
+	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)+rx , 3*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
+	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)-rx , 3*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
+	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)+rx , 3*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
+	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)-rx , 3*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
+	 	}
+	}
+	
 	return m
 }
 
@@ -582,11 +615,14 @@ func run() {
 		if win.JustPressed(pixelgl.Key0) {
 			as.set(0)
 		}
+		if monsters[int(pos.X)][int(pos.Y)] == 1 {
+			fmt.Println("OUCH")
+		}
 
 		if win.JustPressed(pixelgl.KeySpace) {
 			as.toggle(3)
 		}
-		if win.JustPressed(pixelgl.MouseButtonLeft) {
+		if win.JustPressed(pixelgl.MouseButtonRight) {
 			as.execute()
 		}
 		p := pixel.PictureDataFromImage(frame())
