@@ -8,22 +8,16 @@ import (
 	"image/draw"
 	"image/png"
 	"math"
-	"math/rand"
 	"os"
 	"time"
-
-	"github.com/aquilax/go-perlin"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	wr "github.com/mroth/weightedrand"
+	wgen "github.com/deathowl/raycast-experiment-go/world"
+
 )
 
 const (
 	texSize       = 64
-	alpha         = 2.
-	beta          = 2.
-	n             = 3
-	seed    int64 = 100
 )
 
 var (
@@ -69,82 +63,9 @@ func setup() {
 	plane = pixel.V(0.0, 0.66)
 }
 
-func genWorld(size int64) *[][]int {
-	rand.Seed(time.Now().UTC().UnixNano())
-	world := make([][]int, size)
-	p := perlin.NewPerlin(alpha, beta, n, seed)
-	caveMaterial := -1
-	for x := 0.; x <= float64(size-int64(1)); x++ {
-		world[int(x)] = make([]int, size)
-		for y := 0.; y <= float64(size-int64(1)); y++ {
-			intx := int64(x)
-			inty := int64(y)
-			if intx == 0 || inty == 0 || intx == size-int64(1) || inty == size-int64(1) {
-				//borders
-				world[intx][inty] = 1
-			} else if (intx > size/2-int64(2) || intx > size/2+int64(2)) && (inty < size/2-int64(2) || inty > size/2+int64(2)) {
-				//avoid spawning in blocks
-				world[intx][inty] = 0
-			} else {
-				//caves
-				noise := p.Noise2D(x/float64(10), y/float64(10))
 
-				if math.Abs(noise) >= 0.2 {
-					if caveMaterial == -1 {
-						c := wr.NewChooser(
-							wr.Choice{Item: 2, Weight: 1},
-							wr.Choice{Item: 3, Weight: 1},
-							wr.Choice{Item: 4, Weight: 1},
-							wr.Choice{Item: 5, Weight: 1},
-							wr.Choice{Item: 6, Weight: 1},
-							wr.Choice{Item: 7, Weight: 1},
-							//wr.Choice{Item: 8, Weight: 1000},
-
-						)
-						caveMaterial = c.Pick().(int)
-
-					}
-					world[intx][inty] = caveMaterial
-				} else {
-					//look ahead 
-					// noisex := p.Noise2D(x+1/float64(10), y/float64(10))
-					// noisey := p.Noise2D(x/float64(10), y/float64(10))
-					// noisexy := p.Noise2D(x+1/float64(10), y+1/float64(10))
-					// if math.Abs(noisex) < .2 &&  math.Abs(noisey) < .2 &&  math.Abs(noisexy) < .2{
-					 	//caveMaterial = -1
-					// }
-					world[intx][inty] = 0
-				}
-			}
-
-		}
-	}
-	return &world
-}
-
-func genEnemies(world [][]int, probability int) *[][]int {
-	rand.Seed(time.Now().UTC().UnixNano())
-	monsters := make([][]int, len(world))
-	for x := 0 ; x < len(world); x++ {
-		monsters[x] = make([]int, len(world))
-		for y := 0; y < len(world[x]); y++ {
-			if world[x][y] == 0 {
-				monsters[x][y] = 0
-				roll := rand.Intn(100)
-				fmt.Println(roll)
-				if roll < probability {
-					monsters[x][y] = 1
-				}
-			} 
-		}
-	}
-	fmt.Println(monsters)
-	return &monsters
-}
-
-
-var world = *genWorld(1000)
-var monsters = *genEnemies(world, 10)
+var world = *wgen.GenWorld(1000)
+var monsters = *wgen.GenEnemies(world, 10)
 
 /*var world = [25][24]int{
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -298,14 +219,9 @@ func frame() *image.RGBA {
 
 		lineHeight := int(float64(height) / perpWallDist)
 
-		//if lineHeight < 1 {
-		//	lineHeight = 1
-		//}
 
 		drawStart := -lineHeight/2 + height/2
-		//if drawStart < 0 {
-		//	drawStart = 0
-		//}
+
 
 		drawEnd := lineHeight/2 + height/2
 		if drawEnd >= height {
@@ -407,7 +323,7 @@ func minimap() *image.RGBA {
 	if starty != 0 {
 		endy = pos.Y + float64(13)
 	}
-	
+
 	for x := startx; x < endx; x++ {
 		for y := starty; y < endy; y++ {
 			c := getColor(int(x), int(y))
@@ -415,7 +331,7 @@ func minimap() *image.RGBA {
 				c.A = 96
 			}
 			for rx:=0; rx<=3; rx++ {
-				for ry:=0; ry<=3; ry++ { 
+				for ry:=0; ry<=3; ry++ {
 					m.Set(3*int(x-startx)+int(x-startx)+rx , 3*int(y-starty)+int(y-starty)+ry, c)
 					m.Set(3*int(x-startx)+int(x-startx)-rx , 3*int(y-starty)+int(y-starty)-ry, c)
 					m.Set(3*int(x-startx)+int(x-startx)+rx , 3*int(y-starty)+int(y-starty)-ry, c)
@@ -426,14 +342,14 @@ func minimap() *image.RGBA {
 	}
 
 	 for rx:=0; rx<=2; rx++ {
-	 	for ry:=0; ry<=2; ry++ { 
+	 	for ry:=0; ry<=2; ry++ {
 	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)+rx , 3*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
 	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)-rx , 3*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
 	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)+rx , 3*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
 	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)-rx , 3*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
 	 	}
 	}
-	
+
 	return m
 }
 
