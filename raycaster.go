@@ -23,9 +23,9 @@ const (
 var (
 	fullscreen   = false
 	showMap      = true
-	width        = 1280
-	height       = 1024
-	scale        = 1.0
+	width        = 960
+	height       = 540
+	scale        = 2.0
 	wallDistance = 3.0
 
 	as       actionSquare
@@ -312,7 +312,7 @@ func frame() *image.RGBA {
 }
 
 func minimap() *image.RGBA {
-	m := image.NewRGBA(image.Rect(0, 0, 120, 130))
+	m := image.NewRGBA(image.Rect(0, 0, 60, 65))
 	startx := math.Max(0., pos.X-float64(12))
 	starty := math.Max(0., pos.Y-float64(13))
 	endx:= 24.
@@ -330,26 +330,25 @@ func minimap() *image.RGBA {
 			if c.A == 255 {
 				c.A = 96
 			}
-			for rx:=0; rx<=3; rx++ {
+			for rx:=0; rx<=2; rx++ {
 				for ry:=0; ry<=3; ry++ {
-					m.Set(3*int(x-startx)+int(x-startx)+rx , 3*int(y-starty)+int(y-starty)+ry, c)
-					m.Set(3*int(x-startx)+int(x-startx)-rx , 3*int(y-starty)+int(y-starty)-ry, c)
-					m.Set(3*int(x-startx)+int(x-startx)+rx , 3*int(y-starty)+int(y-starty)-ry, c)
-					m.Set(3*int(x-startx)+int(x-startx)-rx , 3*int(y-starty)+int(y-starty)+ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)+rx , 2*int(y-starty)+int(y-starty)+ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)-rx , 2*int(y-starty)+int(y-starty)-ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)+rx , 2*int(y-starty)+int(y-starty)-ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)-rx , 2*int(y-starty)+int(y-starty)+ry, c)
 				}
 			}
 		}
 	}
 
-	 for rx:=0; rx<=2; rx++ {
-	 	for ry:=0; ry<=2; ry++ {
-	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)+rx , 3*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
-	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)-rx , 3*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
-	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)+rx , 3*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
-	 		m.Set(3*int(pos.X - startx)+int(pos.X - startx)-rx , 3*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
-	 	}
+	  for rx:=0; rx<=1; rx++ {
+	  	for ry:=0; ry<=1; ry++ {
+	  		m.Set(2*int(pos.X - startx)+int(pos.X - startx)+rx , 2*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
+	  		m.Set(2*int(pos.X - startx)+int(pos.X - startx)-rx , 2*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
+	  		m.Set(2*int(pos.X - startx)+int(pos.X - startx)+rx , 2*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
+	  		m.Set(2*int(pos.X - startx)+int(pos.X - startx)-rx , 2*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
+	  	}
 	}
-
 	return m
 }
 
