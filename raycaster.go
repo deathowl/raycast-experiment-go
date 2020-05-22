@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/deathowl/raycast-experiment-go/player"
 	wgen "github.com/deathowl/raycast-experiment-go/world"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -357,7 +358,6 @@ func getActionSquare() actionSquare {
 	case a > 1.7:
 		pt = image.Pt(int(pos.X)-1, int(pos.Y)+1)
 	}
-
 	block := -1
 	active := pt.X > 0 && pt.X < len(world) && pt.Y > 0 && pt.Y < len(world[0])
 
@@ -430,19 +430,19 @@ func run() {
 		as = getActionSquare()
 
 		if win.Pressed(pixelgl.KeyUp) || win.Pressed(pixelgl.KeyW) {
-			moveForward(3.5 * dt)
+			player.MoveForward(3.5*dt, world, &pos, plane, dir, wallDistance)
 		}
 
-		if win.Pressed(pixelgl.KeyA) {
-			moveLeft(3.5 * dt)
+		if win.Pressed(pixelgl.KeyLeft) || win.Pressed(pixelgl.KeyA) {
+			player.MoveLeft(3.5*dt, world, &pos, plane)
 		}
 
 		if win.Pressed(pixelgl.KeyDown) || win.Pressed(pixelgl.KeyS) {
-			moveBackwards(3.5 * dt)
+			player.MoveBackwards(3.5*dt, world, &pos, plane, dir)
 		}
 
-		if win.Pressed(pixelgl.KeyD) {
-			moveRight(3.5 * dt)
+		if win.Pressed(pixelgl.KeyRight) || win.Pressed(pixelgl.KeyD) {
+			player.MoveRight(3.5*dt, world, &pos, plane)
 		}
 
 		movedX := win.MousePosition().X - win.MousePreviousPosition().X
@@ -545,47 +545,6 @@ func run() {
 	}
 }
 
-func moveForward(s float64) {
-	if wallDistance > 0.3 {
-		if world[int(pos.X+dir.X*s)][int(pos.Y)] == 0 {
-			pos.X += dir.X * s
-		}
-
-		if world[int(pos.X)][int(pos.Y+dir.Y*s)] == 0 {
-			pos.Y += dir.Y * s
-		}
-	}
-}
-
-func moveLeft(s float64) {
-	if world[int(pos.X-plane.X*s)][int(pos.Y)] == 0 {
-		pos.X -= plane.X * s
-	}
-
-	if world[int(pos.X)][int(pos.Y-plane.Y*s)] == 0 {
-		pos.Y -= plane.Y * s
-	}
-}
-
-func moveBackwards(s float64) {
-	if world[int(pos.X-dir.X*s)][int(pos.Y)] == 0 {
-		pos.X -= dir.X * s
-	}
-
-	if world[int(pos.X)][int(pos.Y-dir.Y*s)] == 0 {
-		pos.Y -= dir.Y * s
-	}
-}
-
-func moveRight(s float64) {
-	if world[int(pos.X+plane.X*s)][int(pos.Y)] == 0 {
-		pos.X += plane.X * s
-	}
-
-	if world[int(pos.X)][int(pos.Y+plane.Y*s)] == 0 {
-		pos.Y += plane.Y * s
-	}
-}
 func lookHorizontal(s float64) {
 	oldDirX := dir.X
 
