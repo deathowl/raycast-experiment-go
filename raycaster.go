@@ -6,13 +6,13 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"image/png"
 	"math"
-	"os"
 	"time"
 
 	"github.com/deathowl/raycast-experiment-go/player"
-	wgen "github.com/deathowl/raycast-experiment-go/world"
+	"github.com/deathowl/raycast-experiment-go/renderer"
+	"github.com/deathowl/raycast-experiment-go/world"
+	w "github.com/deathowl/raycast-experiment-go/world"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 )
@@ -35,9 +35,8 @@ var (
 
 	pos, dir, plane pixel.Vec
 
-	textures = loadTextures()
-	frames   = 0
-	second   = time.Tick(time.Second)
+	frames = 0
+	second = time.Tick(time.Second)
 )
 
 //Typedfs
@@ -62,35 +61,11 @@ func setup() {
 	pos = pixel.V(12.0, 14.5)
 	dir = pixel.V(-1.0, 0.0)
 	plane = pixel.V(0.0, 0.66)
-}
-
-var world = *wgen.GenWorld(1000)
-var monsters = *wgen.GenEnemies(world, 10)
-
-func loadTextures() *image.RGBA {
-	infile, err := os.Open("assets/tiles.png")
-	if err != nil {
-		// replace this with real error handling
-		panic(err)
-	}
-	defer infile.Close()
-	p, err := png.Decode(infile)
-	if err != nil {
-		panic(err)
-	}
-
-	m := image.NewRGBA(p.Bounds())
-	draw.Draw(m, m.Bounds(), p, image.ZP, draw.Src)
-	fmt.Println("Assets loaded successfully.")
-	return m
-}
-
-func getTexNum(x, y int) int {
-	return world[x][y]
+	world.InitWorld(1000)
 }
 
 func getColor(x, y int) color.RGBA {
-	switch world[x][y] {
+	switch w.World[x][y] {
 	case 0:
 		return color.RGBA{43, 30, 24, 255}
 	case 1:
@@ -112,173 +87,6 @@ func getColor(x, y int) color.RGBA {
 	default:
 		return color.RGBA{255, 194, 32, 255}
 	}
-}
-
-func frame() *image.RGBA {
-	m := image.NewRGBA(image.Rect(0, 0, width, height))
-
-	for x := 0; x < width; x++ {
-		var (
-			step         image.Point
-			sideDist     pixel.Vec
-			perpWallDist float64
-			hit, side    bool
-
-			rayPos, worldX, worldY = pos, int(pos.X), int(pos.Y)
-
-			cameraX = 2*float64(x)/float64(width) - 1
-
-			rayDir = pixel.V(
-				dir.X+plane.X*cameraX,
-				dir.Y+plane.Y*cameraX,
-			)
-
-			deltaDist = pixel.V(
-				math.Sqrt(1.0+(rayDir.Y*rayDir.Y)/(rayDir.X*rayDir.X)),
-				math.Sqrt(1.0+(rayDir.X*rayDir.X)/(rayDir.Y*rayDir.Y)),
-			)
-		)
-
-		if rayDir.X < 0 {
-			step.X = -1
-			sideDist.X = (rayPos.X - float64(worldX)) * deltaDist.X
-		} else {
-			step.X = 1
-			sideDist.X = (float64(worldX) + 1.0 - rayPos.X) * deltaDist.X
-		}
-
-		if rayDir.Y < 0 {
-			step.Y = -1
-			sideDist.Y = (rayPos.Y - float64(worldY)) * deltaDist.Y
-		} else {
-			step.Y = 1
-			sideDist.Y = (float64(worldY) + 1.0 - rayPos.Y) * deltaDist.Y
-		}
-
-		for !hit {
-			if sideDist.X < sideDist.Y {
-				sideDist.X += deltaDist.X
-				worldX += step.X
-				side = false
-			} else {
-				sideDist.Y += deltaDist.Y
-				worldY += step.Y
-				side = true
-			}
-
-			if world[worldX][worldY] > 0 {
-				hit = true
-			}
-		}
-
-		var wallX float64
-
-		if side {
-			perpWallDist = (float64(worldY) - rayPos.Y + (1-float64(step.Y))/2) / rayDir.Y
-			wallX = rayPos.X + perpWallDist*rayDir.X
-		} else {
-			perpWallDist = (float64(worldX) - rayPos.X + (1-float64(step.X))/2) / rayDir.X
-			wallX = rayPos.Y + perpWallDist*rayDir.Y
-		}
-
-		if x == width/2 {
-			wallDistance = perpWallDist
-		}
-
-		wallX -= math.Floor(wallX)
-
-		texX := int(wallX * float64(texSize))
-
-		lineHeight := int(float64(height) / perpWallDist)
-
-		drawStart := -lineHeight/2 + height/2
-
-		drawEnd := lineHeight/2 + height/2
-		if drawEnd >= height {
-			drawEnd = height - 1
-		}
-
-		if !side && rayDir.X > 0 {
-			texX = texSize - texX - 1
-		}
-
-		if side && rayDir.Y < 0 {
-			texX = texSize - texX - 1
-		}
-
-		texNum := getTexNum(worldX, worldY)
-
-		for y := drawStart; y < drawEnd+1; y++ {
-			d := y*256 - height*128 + lineHeight*128
-			texY := ((d * texSize) / lineHeight) / 256
-
-			c := textures.RGBAAt(
-				texX+texSize*(texNum),
-				texY%texSize,
-			)
-
-			if side {
-				c.R = c.R / 2
-				c.G = c.G / 2
-				c.B = c.B / 2
-			}
-
-			m.Set(x, y, c)
-		}
-
-		var floorWall pixel.Vec
-
-		if !side && rayDir.X > 0 {
-			floorWall.X = float64(worldX)
-			floorWall.Y = float64(worldY) + wallX
-		} else if !side && rayDir.X < 0 {
-			floorWall.X = float64(worldX) + 1.0
-			floorWall.Y = float64(worldY) + wallX
-		} else if side && rayDir.Y > 0 {
-			floorWall.X = float64(worldX) + wallX
-			floorWall.Y = float64(worldY)
-		} else {
-			floorWall.X = float64(worldX) + wallX
-			floorWall.Y = float64(worldY) + 1.0
-		}
-
-		distWall, distPlayer := perpWallDist, 0.0
-
-		for y := drawEnd + 1; y < height; y++ {
-			currentDist := float64(height) / (2.0*float64(y) - float64(height))
-
-			weight := (currentDist - distPlayer) / (distWall - distPlayer)
-
-			currentFloor := pixel.V(
-				weight*floorWall.X+(1.0-weight)*pos.X,
-				weight*floorWall.Y+(1.0-weight)*pos.Y,
-			)
-
-			fx := int(currentFloor.X*float64(texSize)) % texSize
-			fy := int(currentFloor.Y*float64(texSize)) % texSize
-			m.Set(x, y, textures.At(fx, fy))
-
-			m.Set(x, height-y-1, textures.At(fx+(4*texSize), fy))
-			m.Set(x, height-y, textures.At(fx+(4*texSize), fy))
-		}
-	}
-
-	cursor := textures.RGBAAt(
-		200,
-		200,
-	)
-	cursor.R = 30
-	cursor.G = 30
-	cursor.B = 30
-
-	for i := 2; i < 5; i++ {
-		m.Set(width/2-i, height/2, cursor)
-		m.Set(width/2+i, height/2, cursor)
-		m.Set(width/2, height/2+i, cursor)
-		m.Set(width/2, height/2-i, cursor)
-
-	}
-	return m
 }
 
 func minimap() *image.RGBA {
@@ -359,10 +167,10 @@ func getActionSquare() actionSquare {
 		pt = image.Pt(int(pos.X)-1, int(pos.Y)+1)
 	}
 	block := -1
-	active := pt.X > 0 && pt.X < len(world) && pt.Y > 0 && pt.Y < len(world[0])
+	active := pt.X > 0 && pt.X < len(w.World) && pt.Y > 0 && pt.Y < len(w.World[0])
 
 	if active {
-		block = world[pt.X][pt.Y]
+		block = w.World[pt.X][pt.Y]
 	}
 
 	return actionSquare{
@@ -375,10 +183,10 @@ func getActionSquare() actionSquare {
 
 func (as actionSquare) toggle(n int) {
 	if as.active {
-		if world[as.X][as.Y] == 0 {
-			world[as.X][as.Y] = n
+		if w.World[as.X][as.Y] == 0 {
+			w.World[as.X][as.Y] = n
 		} else {
-			world[as.X][as.Y] = 0
+			w.World[as.X][as.Y] = 0
 		}
 	}
 }
@@ -389,7 +197,7 @@ func (as actionSquare) set(n int) {
 
 func (as actionSquare) execute() {
 	if as.active {
-		world[as.X][as.Y] = selected
+		w.World[as.X][as.Y] = selected
 	}
 }
 
@@ -430,21 +238,20 @@ func run() {
 		as = getActionSquare()
 
 		if win.Pressed(pixelgl.KeyUp) || win.Pressed(pixelgl.KeyW) {
-			player.MoveForward(3.5*dt, world, &pos, plane, dir, wallDistance)
+			player.MoveForward(3.5*dt, w.World, &pos, plane, dir, wallDistance)
 		}
 
 		if win.Pressed(pixelgl.KeyLeft) || win.Pressed(pixelgl.KeyA) {
-			player.MoveLeft(3.5*dt, world, &pos, plane)
+			player.MoveLeft(3.5*dt, w.World, &pos, plane)
 		}
 
 		if win.Pressed(pixelgl.KeyDown) || win.Pressed(pixelgl.KeyS) {
-			player.MoveBackwards(3.5*dt, world, &pos, plane, dir)
+			player.MoveBackwards(3.5*dt, w.World, &pos, plane, dir)
 		}
 
 		if win.Pressed(pixelgl.KeyRight) || win.Pressed(pixelgl.KeyD) {
-			player.MoveRight(3.5*dt, world, &pos, plane)
+			player.MoveRight(3.5*dt, w.World, &pos, plane)
 		}
-
 		movedX := win.MousePosition().X - win.MousePreviousPosition().X
 
 		if movedX > 0 {
@@ -484,14 +291,10 @@ func run() {
 			as.set(6)
 		}
 
-		if win.JustPressed(pixelgl.Key7) {
-			as.set(7)
-		}
-
 		if win.JustPressed(pixelgl.Key0) {
 			as.set(0)
 		}
-		if monsters[int(pos.X)][int(pos.Y)] == 1 {
+		if w.Enemies[int(pos.X)][int(pos.Y)] == 1 {
 			fmt.Println("OUCH")
 		}
 
@@ -501,7 +304,7 @@ func run() {
 		if win.JustPressed(pixelgl.MouseButtonRight) {
 			as.execute()
 		}
-		p := pixel.PictureDataFromImage(frame())
+		p := pixel.PictureDataFromImage(renderer.RenderFrame(width, height, dir, pos, plane))
 
 		pixel.NewSprite(p, p.Bounds()).
 			Draw(win, pixel.IM.Moved(c).Scaled(c, scale))

@@ -1,21 +1,23 @@
 package world
+
 import (
 	"fmt"
 	"math"
 	"math/rand"
 	"time"
+
 	"github.com/aquilax/go-perlin"
 	wr "github.com/mroth/weightedrand"
-
 )
+
 const (
-	alpha         = 2.
-	beta          = 2.
-	n             = 3
-	seed    int64 = 100
+	alpha       = 2.
+	beta        = 2.
+	n           = 3
+	seed  int64 = 100
 )
 
-func GenWorld(size int64) *[][]int {
+func genWorld(size int64) *[][]int {
 	rand.Seed(time.Now().UTC().UnixNano())
 	world := make([][]int, size)
 	p := perlin.NewPerlin(alpha, beta, n, seed)
@@ -57,7 +59,7 @@ func GenWorld(size int64) *[][]int {
 					// noisey := p.Noise2D(x/float64(10), y/float64(10))
 					// noisexy := p.Noise2D(x+1/float64(10), y+1/float64(10))
 					// if math.Abs(noisex) < .2 &&  math.Abs(noisey) < .2 &&  math.Abs(noisexy) < .2{
-					 	//caveMaterial = -1
+					//caveMaterial = -1
 					// }
 					world[intx][inty] = 0
 				}
@@ -68,10 +70,10 @@ func GenWorld(size int64) *[][]int {
 	return &world
 }
 
-func GenEnemies(world [][]int, probability int) *[][]int {
+func genEnemies(world [][]int, probability int) *[][]int {
 	rand.Seed(time.Now().UTC().UnixNano())
 	monsters := make([][]int, len(world))
-	for x := 0 ; x < len(world); x++ {
+	for x := 0; x < len(world); x++ {
 		monsters[x] = make([]int, len(world))
 		for y := 0; y < len(world[x]); y++ {
 			if world[x][y] == 0 {
