@@ -10,14 +10,14 @@ import (
 	"math"
 	"os"
 	"time"
+
+	wgen "github.com/deathowl/raycast-experiment-go/world"
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
-	wgen "github.com/deathowl/raycast-experiment-go/world"
-
 )
 
 const (
-	texSize       = 64
+	texSize = 64
 )
 
 var (
@@ -35,8 +35,8 @@ var (
 	pos, dir, plane pixel.Vec
 
 	textures = loadTextures()
-	frames = 0
-	second = time.Tick(time.Second)
+	frames   = 0
+	second   = time.Tick(time.Second)
 )
 
 //Typedfs
@@ -63,37 +63,8 @@ func setup() {
 	plane = pixel.V(0.0, 0.66)
 }
 
-
 var world = *wgen.GenWorld(1000)
 var monsters = *wgen.GenEnemies(world, 10)
-
-/*var world = [25][24]int{
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
-	{1, 0, 0, 0, 2, 7, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 3, 0, 7, 0, 3, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 2, 2, 2, 2, 0, 2, 2, 0, 0, 0, 0, 3, 0, 3, 0, 3, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 0, 6, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 5, 0, 0, 0, 1},
-	{1, 0, 6, 0, 4, 0, 7, 0, 4, 0, 0, 0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0, 0, 1},
-	{1, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5, 0, 0, 0, 1},
-	{1, 4, 4, 4, 4, 4, 4, 0, 4, 0, 0, 0, 5, 5, 0, 5, 5, 5, 0, 5, 5, 0, 0, 1},
-	{1, 4, 0, 0, 0, 0, 0, 0, 4, 0, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 0, 1},
-	{1, 4, 0, 4, 0, 0, 0, 0, 4, 0, 0, 5, 0, 5, 5, 5, 5, 5, 5, 5, 0, 5, 0, 1},
-	{1, 4, 0, 4, 4, 4, 4, 4, 4, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 5, 0, 5, 0, 1},
-	{1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 5, 5, 0, 0, 0, 0, 1},
-	{1, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-}*/
 
 func loadTextures() *image.RGBA {
 	infile, err := os.Open("assets/tiles.png")
@@ -219,9 +190,7 @@ func frame() *image.RGBA {
 
 		lineHeight := int(float64(height) / perpWallDist)
 
-
 		drawStart := -lineHeight/2 + height/2
-
 
 		drawEnd := lineHeight/2 + height/2
 		if drawEnd >= height {
@@ -315,7 +284,7 @@ func minimap() *image.RGBA {
 	m := image.NewRGBA(image.Rect(0, 0, 60, 65))
 	startx := math.Max(0., pos.X-float64(12))
 	starty := math.Max(0., pos.Y-float64(13))
-	endx:= 24.
+	endx := 24.
 	endy := 26.
 	if startx != 0 {
 		endx = pos.X + float64(12)
@@ -330,24 +299,24 @@ func minimap() *image.RGBA {
 			if c.A == 255 {
 				c.A = 96
 			}
-			for rx:=0; rx<=2; rx++ {
-				for ry:=0; ry<=3; ry++ {
-					m.Set(2*int(x-startx)+int(x-startx)+rx , 2*int(y-starty)+int(y-starty)+ry, c)
-					m.Set(2*int(x-startx)+int(x-startx)-rx , 2*int(y-starty)+int(y-starty)-ry, c)
-					m.Set(2*int(x-startx)+int(x-startx)+rx , 2*int(y-starty)+int(y-starty)-ry, c)
-					m.Set(2*int(x-startx)+int(x-startx)-rx , 2*int(y-starty)+int(y-starty)+ry, c)
+			for rx := 0; rx <= 2; rx++ {
+				for ry := 0; ry <= 3; ry++ {
+					m.Set(2*int(x-startx)+int(x-startx)+rx, 2*int(y-starty)+int(y-starty)+ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)-rx, 2*int(y-starty)+int(y-starty)-ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)+rx, 2*int(y-starty)+int(y-starty)-ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)-rx, 2*int(y-starty)+int(y-starty)+ry, c)
 				}
 			}
 		}
 	}
 
-	  for rx:=0; rx<=1; rx++ {
-	  	for ry:=0; ry<=1; ry++ {
-	  		m.Set(2*int(pos.X - startx)+int(pos.X - startx)+rx , 2*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
-	  		m.Set(2*int(pos.X - startx)+int(pos.X - startx)-rx , 2*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
-	  		m.Set(2*int(pos.X - startx)+int(pos.X - startx)+rx , 2*int(pos.Y - starty)+int(pos.Y - starty)-ry, color.RGBA{0, 255, 0, 180})
-	  		m.Set(2*int(pos.X - startx)+int(pos.X - startx)-rx , 2*int(pos.Y - starty)+int(pos.Y - starty)+ry, color.RGBA{0, 255, 0, 180})
-	  	}
+	for rx := 0; rx <= 1; rx++ {
+		for ry := 0; ry <= 1; ry++ {
+			m.Set(2*int(pos.X-startx)+int(pos.X-startx)+rx, 2*int(pos.Y-starty)+int(pos.Y-starty)+ry, color.RGBA{0, 255, 0, 180})
+			m.Set(2*int(pos.X-startx)+int(pos.X-startx)-rx, 2*int(pos.Y-starty)+int(pos.Y-starty)-ry, color.RGBA{0, 255, 0, 180})
+			m.Set(2*int(pos.X-startx)+int(pos.X-startx)+rx, 2*int(pos.Y-starty)+int(pos.Y-starty)-ry, color.RGBA{0, 255, 0, 180})
+			m.Set(2*int(pos.X-startx)+int(pos.X-startx)-rx, 2*int(pos.Y-starty)+int(pos.Y-starty)+ry, color.RGBA{0, 255, 0, 180})
+		}
 	}
 	return m
 }
@@ -390,7 +359,7 @@ func getActionSquare() actionSquare {
 	}
 
 	block := -1
-	active := pt.X > 0 && pt.X < len(world)  && pt.Y > 0 && pt.Y < len(world[0])
+	active := pt.X > 0 && pt.X < len(world) && pt.Y > 0 && pt.Y < len(world[0])
 
 	if active {
 		block = world[pt.X][pt.Y]
@@ -479,21 +448,11 @@ func run() {
 		movedX := win.MousePosition().X - win.MousePreviousPosition().X
 
 		if movedX > 0 {
-			lookRight(movedX * dt * 0.5)
+			lookHorizontal(movedX * dt * 0.5)
 		}
 		if movedX < 0 {
-			lookLeft(movedX * dt * -0.5)
+			lookHorizontal(movedX * dt * 0.5)
 		}
-
-		/*
-			movedY := win.MousePosition().X - win.MousePreviousPosition().X
-
-			if movedY > 0 {
-				lookUp(movedY * dt * 0.5)
-			}
-			if movedY < 0 {
-				lookDown(movedY * dt * -0.5)
-			}*/
 
 		if win.JustPressed(pixelgl.KeyM) {
 			showMap = !showMap
@@ -578,6 +537,7 @@ func run() {
 		select {
 		case <-second:
 			win.SetTitle(fmt.Sprintf("ShootingGame | FPS: %d", frames))
+			fmt.Println("ShootingGame | FPS: ", frames)
 			frames = 0
 		default:
 		}
@@ -626,8 +586,7 @@ func moveRight(s float64) {
 		pos.Y += plane.Y * s
 	}
 }
-
-func lookRight(s float64) {
+func lookHorizontal(s float64) {
 	oldDirX := dir.X
 
 	dir.X = dir.X*math.Cos(-s) - dir.Y*math.Sin(-s)
@@ -637,18 +596,6 @@ func lookRight(s float64) {
 
 	plane.X = plane.X*math.Cos(-s) - plane.Y*math.Sin(-s)
 	plane.Y = oldPlaneX*math.Sin(-s) + plane.Y*math.Cos(-s)
-}
-
-func lookLeft(s float64) {
-	oldDirX := dir.X
-
-	dir.X = dir.X*math.Cos(s) - dir.Y*math.Sin(s)
-	dir.Y = oldDirX*math.Sin(s) + dir.Y*math.Cos(s)
-
-	oldPlaneX := plane.X
-
-	plane.X = plane.X*math.Cos(s) - plane.Y*math.Sin(s)
-	plane.Y = oldPlaneX*math.Sin(s) + plane.Y*math.Cos(s)
 }
 
 func main() {
