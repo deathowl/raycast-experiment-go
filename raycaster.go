@@ -448,10 +448,10 @@ func run() {
 		movedX := win.MousePosition().X - win.MousePreviousPosition().X
 
 		if movedX > 0 {
-			lookHorizontal(movedX * dt * 0.5)
+			player.LookHorizontal(movedX*dt*0.5, &dir, &plane)
 		}
 		if movedX < 0 {
-			lookHorizontal(movedX * dt * 0.5)
+			player.LookHorizontal(movedX*dt*0.5, &dir, &plane)
 		}
 
 		if win.JustPressed(pixelgl.KeyM) {
@@ -543,18 +543,6 @@ func run() {
 		}
 		win.Update()
 	}
-}
-
-func lookHorizontal(s float64) {
-	oldDirX := dir.X
-
-	dir.X = dir.X*math.Cos(-s) - dir.Y*math.Sin(-s)
-	dir.Y = oldDirX*math.Sin(-s) + dir.Y*math.Cos(-s)
-
-	oldPlaneX := plane.X
-
-	plane.X = plane.X*math.Cos(-s) - plane.Y*math.Sin(-s)
-	plane.Y = oldPlaneX*math.Sin(-s) + plane.Y*math.Cos(-s)
 }
 
 func main() {

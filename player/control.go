@@ -1,6 +1,10 @@
 package player
 
-import "github.com/faiface/pixel"
+import (
+	"math"
+
+	"github.com/faiface/pixel"
+)
 
 func MoveLeft(s float64, world [][]int, pos *pixel.Vec, plane pixel.Vec) {
 	if world[int(pos.X-plane.X*s)][int(pos.Y)] == 0 {
@@ -41,4 +45,16 @@ func MoveForward(s float64, world [][]int, pos *pixel.Vec, plane, dir pixel.Vec,
 			pos.Y += dir.Y * s
 		}
 	}
+}
+
+func LookHorizontal(s float64, dir, plane *pixel.Vec) {
+	oldDirX := dir.X
+
+	dir.X = dir.X*math.Cos(-s) - dir.Y*math.Sin(-s)
+	dir.Y = oldDirX*math.Sin(-s) + dir.Y*math.Cos(-s)
+
+	oldPlaneX := plane.X
+
+	plane.X = plane.X*math.Cos(-s) - plane.Y*math.Sin(-s)
+	plane.Y = oldPlaneX*math.Sin(-s) + plane.Y*math.Cos(-s)
 }
