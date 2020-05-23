@@ -1,7 +1,6 @@
 package world
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"time"
@@ -11,16 +10,15 @@ import (
 )
 
 const (
-	alpha       = 2.
-	beta        = 2.
-	n           = 3
-	seed  int64 = 100
+	alpha = 2.
+	beta  = 2.
+	n     = 3
 )
 
 func genWorld(size int64) *[][]int {
 	rand.Seed(time.Now().UTC().UnixNano())
 	world := make([][]int, size)
-	p := perlin.NewPerlin(alpha, beta, n, seed)
+	p := perlin.NewPerlin(alpha, beta, n, rand.Int63n(100))
 	caveMaterial := -1
 	for x := 0.; x <= float64(size-int64(1)); x++ {
 		world[int(x)] = make([]int, size)
@@ -79,13 +77,11 @@ func genEnemies(world [][]int, probability int) *[][]int {
 			if world[x][y] == 0 {
 				monsters[x][y] = 0
 				roll := rand.Intn(100)
-				fmt.Println(roll)
 				if roll < probability {
 					monsters[x][y] = 1
 				}
 			}
 		}
 	}
-	fmt.Println(monsters)
 	return &monsters
 }

@@ -1,6 +1,8 @@
 package world
 
-import "image/color"
+import (
+	"image/color"
+)
 
 var World, Enemies [][]int
 
@@ -9,6 +11,11 @@ func InitWorld(size int64) {
 	Enemies = *genEnemies(World, 10)
 
 }
+
+// func LoadWorld(path string) {
+// 	f, err := os.Open("/tmp/dat")
+
+// }
 
 func GetTexNum(x, y int) int {
 	return World[x][y]
