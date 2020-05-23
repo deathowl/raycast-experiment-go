@@ -35,8 +35,8 @@ func MoveRight(s float64, world [][]int, pos *pixel.Vec, plane pixel.Vec) {
 		pos.Y += plane.Y * s
 	}
 }
-func MoveForward(s float64, world [][]int, pos *pixel.Vec, plane, dir pixel.Vec, wallDistance float64) {
-	if wallDistance > 1 {
+func MoveForward(s float64, world [][]int, pos *pixel.Vec, plane, dir pixel.Vec) {
+	if true {
 		if world[int(pos.X+dir.X*s)][int(pos.Y)] == 0 {
 			pos.X += dir.X * s
 		}

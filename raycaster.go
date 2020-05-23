@@ -21,12 +21,13 @@ const (
 )
 
 var (
-	fullscreen   = false
-	showMap      = true
-	width        = 960
-	height       = 540
-	scale        = 2.0
-	wallDistance = 3.0
+	fullscreen = false
+	showMap    = true
+	width      = 960
+	height     = 540
+	scale      = 2.0
+
+	movementSpeed = 2.5
 
 	as       actionSquare
 	inv      Inventory
@@ -169,21 +170,26 @@ func run() {
 		last = time.Now()
 
 		as = getActionSquare()
+		if win.Pressed(pixelgl.KeyLeftShift) {
+			movementSpeed = 5
+		} else {
+			movementSpeed = 2.5
+		}
 
 		if win.Pressed(pixelgl.KeyUp) || win.Pressed(pixelgl.KeyW) {
-			player.MoveForward(3.5*dt, w.World, &pos, plane, dir, wallDistance)
+			player.MoveForward(movementSpeed*dt, w.World, &pos, plane, dir)
 		}
 
 		if win.Pressed(pixelgl.KeyLeft) || win.Pressed(pixelgl.KeyA) {
-			player.MoveLeft(3.5*dt, w.World, &pos, plane)
+			player.MoveLeft(movementSpeed*dt, w.World, &pos, plane)
 		}
 
 		if win.Pressed(pixelgl.KeyDown) || win.Pressed(pixelgl.KeyS) {
-			player.MoveBackwards(3.5*dt, w.World, &pos, plane, dir)
+			player.MoveBackwards(movementSpeed*dt, w.World, &pos, plane, dir)
 		}
 
 		if win.Pressed(pixelgl.KeyRight) || win.Pressed(pixelgl.KeyD) {
-			player.MoveRight(3.5*dt, w.World, &pos, plane)
+			player.MoveRight(movementSpeed*dt, w.World, &pos, plane)
 		}
 		movedX := win.MousePosition().X - win.MousePreviousPosition().X
 
