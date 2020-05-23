@@ -6,7 +6,6 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"math"
 	"time"
 
 	"github.com/deathowl/raycast-experiment-go/player"
@@ -62,72 +61,6 @@ func setup() {
 	dir = pixel.V(-1.0, 0.0)
 	plane = pixel.V(0.0, 0.66)
 	world.InitWorld(1000)
-}
-
-func getColor(x, y int) color.RGBA {
-	switch w.World[x][y] {
-	case 0:
-		return color.RGBA{43, 30, 24, 255}
-	case 1:
-		return color.RGBA{100, 89, 73, 255}
-	case 2:
-		return color.RGBA{110, 23, 0, 255}
-	case 3:
-		return color.RGBA{45, 103, 171, 255}
-	case 4:
-		return color.RGBA{123, 84, 33, 255}
-	case 5:
-		return color.RGBA{158, 148, 130, 255}
-	case 6:
-		return color.RGBA{203, 161, 47, 255}
-	case 7:
-		return color.RGBA{255, 107, 0, 255}
-	case 9:
-		return color.RGBA{0, 0, 0, 0}
-	default:
-		return color.RGBA{255, 194, 32, 255}
-	}
-}
-
-func minimap() *image.RGBA {
-	m := image.NewRGBA(image.Rect(0, 0, 60, 65))
-	startx := math.Max(0., pos.X-float64(12))
-	starty := math.Max(0., pos.Y-float64(13))
-	endx := 24.
-	endy := 26.
-	if startx != 0 {
-		endx = pos.X + float64(12)
-	}
-	if starty != 0 {
-		endy = pos.Y + float64(13)
-	}
-
-	for x := startx; x < endx; x++ {
-		for y := starty; y < endy; y++ {
-			c := getColor(int(x), int(y))
-			if c.A == 255 {
-				c.A = 96
-			}
-			for rx := 0; rx <= 2; rx++ {
-				for ry := 0; ry <= 3; ry++ {
-					m.Set(2*int(x-startx)+int(x-startx)+rx, 2*int(y-starty)+int(y-starty)+ry, c)
-					m.Set(2*int(x-startx)+int(x-startx)-rx, 2*int(y-starty)+int(y-starty)-ry, c)
-					m.Set(2*int(x-startx)+int(x-startx)+rx, 2*int(y-starty)+int(y-starty)-ry, c)
-					m.Set(2*int(x-startx)+int(x-startx)-rx, 2*int(y-starty)+int(y-starty)+ry, c)
-				}
-			}
-		}
-	}
-
-	for rx := 0; rx <= 1; rx++ {
-		for ry := 0; ry <= 1; ry++ {
-			m.Set(2*int(pos.X-startx)+int(pos.X-startx)+rx, 2*int(pos.Y-starty)+int(pos.Y-starty)+ry, color.RGBA{0, 255, 0, 180})
-			m.Set(2*int(pos.X-startx)+int(pos.X-startx)-rx, 2*int(pos.Y-starty)+int(pos.Y-starty)-ry, color.RGBA{0, 255, 0, 180})
-			m.Set(2*int(pos.X-startx)+int(pos.X-startx)+rx, 2*int(pos.Y-starty)+int(pos.Y-starty)-ry, color.RGBA{0, 255, 0, 180})
-			m.Set(2*int(pos.X-startx)+int(pos.X-startx)-rx, 2*int(pos.Y-starty)+int(pos.Y-starty)+ry, color.RGBA{0, 255, 0, 180})
-		}
-	}
-	return m
 }
 
 func getInventory() Inventory {
@@ -311,12 +244,12 @@ func run() {
 
 		if showMap {
 			dt := time.Since(minimaprefresh).Seconds()
-			m := pixel.PictureDataFromImage(minimap())
+			m := pixel.PictureDataFromImage(renderer.RenderMinimap(pos))
 			if minimapInit {
 				minimapInit = false
 				lastM = m
 			}
-			if dt > .5 {
+			if dt > .1 {
 				lastM = m
 				minimaprefresh = time.Now()
 			}

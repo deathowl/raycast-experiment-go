@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"image"
+	"image/color"
 	"math"
 
 	"github.com/deathowl/raycast-experiment-go/assets"
@@ -181,5 +182,47 @@ func RenderFrame(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 		m.Set(width/2, height/2-i, cursor)
 
 	}
+	return m
+}
+
+func RenderMinimap(pos pixel.Vec) *image.RGBA {
+	m := image.NewRGBA(image.Rect(0, 0, 60, 65))
+	startx := math.Max(0., pos.X-float64(12))
+	starty := math.Max(0., pos.Y-float64(13))
+	endx := 24.
+	endy := 26.
+	if startx != 0 {
+		endx = pos.X + float64(12)
+	}
+	if starty != 0 {
+		endy = pos.Y + float64(13)
+	}
+
+	for x := startx; x < endx; x++ {
+		for y := starty; y < endy; y++ {
+			c := w.GetColor(int(x), int(y))
+			if c.A == 255 {
+				c.A = 96
+			}
+			for rx := 0; rx <= 2; rx++ {
+				for ry := 0; ry <= 2; ry++ {
+					m.Set(2*int(x-startx)+int(x-startx)+rx, 2*int(y-starty)+int(y-starty)+ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)-rx, 2*int(y-starty)+int(y-starty)-ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)+rx, 2*int(y-starty)+int(y-starty)-ry, c)
+					m.Set(2*int(x-startx)+int(x-startx)-rx, 2*int(y-starty)+int(y-starty)+ry, c)
+				}
+			}
+		}
+	}
+
+	for rx := 0; rx <= 1; rx++ {
+		for ry := 0; ry <= 1; ry++ {
+			m.Set(2*int(pos.X-startx)+int(pos.X-startx)+rx, 2*int(pos.Y-starty)+int(pos.Y-starty)+ry, color.RGBA{0, 255, 0, 180})
+			m.Set(2*int(pos.X-startx)+int(pos.X-startx)-rx, 2*int(pos.Y-starty)+int(pos.Y-starty)-ry, color.RGBA{0, 255, 0, 180})
+			m.Set(2*int(pos.X-startx)+int(pos.X-startx)+rx, 2*int(pos.Y-starty)+int(pos.Y-starty)-ry, color.RGBA{0, 255, 0, 180})
+			m.Set(2*int(pos.X-startx)+int(pos.X-startx)-rx, 2*int(pos.Y-starty)+int(pos.Y-starty)+ry, color.RGBA{0, 255, 0, 180})
+		}
+	}
+
 	return m
 }
