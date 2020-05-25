@@ -28,7 +28,7 @@ func genWorld(size int64) *[][]int {
 			if intx == 0 || inty == 0 || intx == size-int64(1) || inty == size-int64(1) {
 				//borders
 				world[intx][inty] = 1
-			} else if (intx > size/2-int64(2) || intx > size/2+int64(2)) && (inty < size/2-int64(2) || inty > size/2+int64(2)) {
+			} else if (intx > 10 && intx < 14) && (inty < 16 && inty > 12) {
 				//avoid spawning in blocks
 				world[intx][inty] = 0
 			} else {

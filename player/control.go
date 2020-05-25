@@ -17,11 +17,19 @@ func MoveLeft(s float64, world [][]int, pos *pixel.Vec, plane pixel.Vec) {
 }
 
 func MoveBackwards(s float64, world [][]int, pos *pixel.Vec, plane, dir pixel.Vec) {
-	if world[int(pos.X-dir.X*s)][int(pos.Y)] == 0 {
+	boundaryX := .5
+	if math.Signbit(dir.X) {
+		boundaryX = -.5
+	}
+	boundaryY := .5
+	if math.Signbit(dir.Y) {
+		boundaryY = -.5
+	}
+	if world[int(pos.X-dir.X*s-boundaryX)][int(pos.Y)] == 0 {
 		pos.X -= dir.X * s
 	}
 
-	if world[int(pos.X)][int(pos.Y-dir.Y*s)] == 0 {
+	if world[int(pos.X)][int(pos.Y-dir.Y*s-boundaryY)] == 0 {
 		pos.Y -= dir.Y * s
 	}
 }

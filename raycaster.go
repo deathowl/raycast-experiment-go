@@ -61,7 +61,7 @@ func setup() {
 	pos = pixel.V(12.0, 14.5)
 	dir = pixel.V(-1.0, 0.0)
 	plane = pixel.V(0.0, 0.66)
-	world.InitWorld(1000)
+	world.InitWorld(100)
 }
 
 func getInventory() Inventory {
@@ -80,23 +80,23 @@ func (i Inventory) getBitMap() *image.RGBA {
 }
 
 func getActionSquare() actionSquare {
-	pt := image.Pt(int(pos.X)+1, int(pos.Y))
+	pt := image.Pt(int(pos.X)+2, int(pos.Y))
 
 	a := dir.Angle()
 
 	switch {
 	case a > 2.8 || a < -2.8:
-		pt = image.Pt(int(pos.X)-1, int(pos.Y))
+		pt = image.Pt(int(pos.X)-2, int(pos.Y))
 	case a > -2.8 && a < -2.2:
 		pt = image.Pt(int(pos.X)-1, int(pos.Y)-1)
 	case a > -2.2 && a < -1.4:
-		pt = image.Pt(int(pos.X), int(pos.Y)-1)
+		pt = image.Pt(int(pos.X), int(pos.Y)-2)
 	case a > -1.4 && a < -0.7:
 		pt = image.Pt(int(pos.X)+1, int(pos.Y)-1)
 	case a > 0.4 && a < 1.0:
 		pt = image.Pt(int(pos.X)+1, int(pos.Y)+1)
 	case a > 1.0 && a < 1.7:
-		pt = image.Pt(int(pos.X), int(pos.Y)+1)
+		pt = image.Pt(int(pos.X), int(pos.Y)+2)
 	case a > 1.7:
 		pt = image.Pt(int(pos.X)-1, int(pos.Y)+1)
 	}
@@ -171,7 +171,7 @@ func run() {
 
 		as = getActionSquare()
 		if win.Pressed(pixelgl.KeyLeftShift) {
-			movementSpeed = 5
+			movementSpeed = 5.0
 		} else {
 			movementSpeed = 2.5
 		}
@@ -243,9 +243,13 @@ func run() {
 		if win.JustPressed(pixelgl.MouseButtonRight) {
 			as.execute()
 		}
-		p := pixel.PictureDataFromImage(renderer.RenderFrame(width, height, dir, pos, plane))
+		p := pixel.PictureDataFromImage(renderer.RenderBackground(width, height, dir, pos, plane))
 
 		pixel.NewSprite(p, p.Bounds()).
+			Draw(win, pixel.IM.Moved(c).Scaled(c, scale))
+
+		ep := pixel.PictureDataFromImage(renderer.RenderEnemies(width, height, dir, pos, plane))
+		pixel.NewSprite(ep, ep.Bounds()).
 			Draw(win, pixel.IM.Moved(c).Scaled(c, scale))
 
 		if showMap {

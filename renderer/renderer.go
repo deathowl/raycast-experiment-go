@@ -18,7 +18,7 @@ var (
 	textures = assets.LoadTextures()
 )
 
-func RenderFrame(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
+func RenderBackground(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 	m := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	for x := 0; x < width; x++ {
@@ -58,7 +58,6 @@ func RenderFrame(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 			step.Y = 1
 			sideDist.Y = (float64(worldY) + 1.0 - rayPos.Y) * deltaDist.Y
 		}
-
 		for !hit {
 			if sideDist.X < sideDist.Y {
 				sideDist.X += deltaDist.X
@@ -84,10 +83,6 @@ func RenderFrame(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 			perpWallDist = (float64(worldX) - rayPos.X + (1-float64(step.X))/2) / rayDir.X
 			wallX = rayPos.Y + perpWallDist*rayDir.Y
 		}
-
-		// if x == width/2 {
-		// 	wallDistance = perpWallDist
-		// }
 
 		wallX -= math.Floor(wallX)
 
@@ -182,6 +177,111 @@ func RenderFrame(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 		m.Set(width/2, height/2-i, cursor)
 
 	}
+	return m
+}
+
+func RenderEnemies(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
+	m := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	for x := 0; x < width; x++ {
+		var (
+			step            image.Point
+			sideDist        pixel.Vec
+			perpWallDist    float64
+			hit, ehit, side bool
+
+			rayPos, worldX, worldY = pos, int(pos.X), int(pos.Y)
+
+			cameraX = 2*float64(x)/float64(width) - 1
+
+			rayDir = pixel.V(
+				dir.X+plane.X*cameraX,
+				dir.Y+plane.Y*cameraX,
+			)
+			deltaDist = pixel.V(
+				math.Sqrt(1.0+(rayDir.Y*rayDir.Y)/(rayDir.X*rayDir.X)),
+				math.Sqrt(1.0+(rayDir.X*rayDir.X)/(rayDir.Y*rayDir.Y)),
+			)
+		)
+		if rayDir.X < 0 {
+			step.X = -1
+			sideDist.X = (rayPos.X - float64(worldX)) * deltaDist.X
+		} else {
+			step.X = 1
+			sideDist.X = (float64(worldX) + 1.0 - rayPos.X) * deltaDist.X
+		}
+
+		if rayDir.Y < 0 {
+			step.Y = -1
+			sideDist.Y = (rayPos.Y - float64(worldY)) * deltaDist.Y
+		} else {
+			step.Y = 1
+			sideDist.Y = (float64(worldY) + 1.0 - rayPos.Y) * deltaDist.Y
+		}
+		for !hit && float64(worldX) > math.Abs(float64(step.X)) && worldX < len(w.Enemies)-step.X && worldY < len(w.Enemies)-step.Y && float64(worldY) > math.Abs(float64(step.Y)) {
+			if sideDist.X < sideDist.Y {
+				sideDist.X += deltaDist.X
+				worldX += step.X
+				side = false
+			} else {
+				sideDist.Y += deltaDist.Y
+				worldY += step.Y
+				side = true
+			}
+			if w.World[worldX][worldY] > 0 {
+				hit = true
+			}
+
+			if w.Enemies[worldX][worldY] > 0 {
+				hit = true
+				ehit = true
+			}
+		}
+
+		var wallX float64
+
+		if side {
+			perpWallDist = (float64(worldY) - rayPos.Y + (1-float64(step.Y))/2) / rayDir.Y
+			wallX = rayPos.X + perpWallDist*rayDir.X
+		} else {
+			perpWallDist = (float64(worldX) - rayPos.X + (1-float64(step.X))/2) / rayDir.X
+			wallX = rayPos.Y + perpWallDist*rayDir.Y
+		}
+
+		wallX -= math.Floor(wallX)
+
+		texX := int(wallX * float64(texSize))
+
+		lineHeight := int(float64(height) / perpWallDist)
+
+		drawStart := -lineHeight/2 + height/2
+
+		drawEnd := lineHeight/2 + height/2
+		if drawEnd >= height {
+			drawEnd = height - 1
+		}
+
+		texNum := 8
+		if ehit {
+			for y := drawStart; y < drawEnd+1; y++ {
+				if lineHeight > 0 {
+					d := y*256 - height*128 + lineHeight*128
+					texY := ((d * texSize) / lineHeight) / 256
+
+					c := textures.RGBAAt(
+						texX+texSize*(texNum),
+						texY%texSize,
+					)
+
+					m.Set(x, y, c)
+				}
+
+			}
+
+		}
+
+	}
+
 	return m
 }
 

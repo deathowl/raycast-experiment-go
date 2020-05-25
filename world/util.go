@@ -8,7 +8,7 @@ var World, Enemies [][]int
 
 func InitWorld(size int64) {
 	World = *genWorld(size)
-	Enemies = *genEnemies(World, 10)
+	Enemies = *genEnemies(World, 3)
 
 }
 
