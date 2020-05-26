@@ -18,6 +18,13 @@ var (
 	textures = assets.LoadTextures()
 )
 
+func b2i(b bool) int8 {
+	if b {
+		return 1
+	}
+	return 0
+}
+
 func RenderBackground(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 	m := image.NewRGBA(image.Rect(0, 0, width, height))
 
@@ -59,6 +66,7 @@ func RenderBackground(width, height int, dir, pos, plane pixel.Vec) *image.RGBA 
 			sideDist.Y = (float64(worldY) + 1.0 - rayPos.Y) * deltaDist.Y
 		}
 		for !hit {
+
 			if sideDist.X < sideDist.Y {
 				sideDist.X += deltaDist.X
 				worldX += step.X
@@ -68,7 +76,6 @@ func RenderBackground(width, height int, dir, pos, plane pixel.Vec) *image.RGBA 
 				worldY += step.Y
 				side = true
 			}
-
 			if w.World[worldX][worldY] > 0 {
 				hit = true
 			}
@@ -182,14 +189,20 @@ func RenderBackground(width, height int, dir, pos, plane pixel.Vec) *image.RGBA 
 
 func RenderEnemies(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 	m := image.NewRGBA(image.Rect(0, 0, width, height))
+	assetInitialSides := make([][]int8, len(w.Enemies))
+	for i := 0; i < len(w.Enemies); i++ {
+		assetInitialSides[i] = make([]int8, len(w.Enemies[i]))
+		for ii := range assetInitialSides[i] {
+			assetInitialSides[i][ii] = -1
+		}
 
+	}
 	for x := 0; x < width; x++ {
 		var (
-			step            image.Point
-			sideDist        pixel.Vec
-			perpWallDist    float64
-			hit, ehit, side bool
-
+			step                   image.Point
+			sideDist               pixel.Vec
+			perpWallDist           float64
+			hit, ehit, side        bool
 			rayPos, worldX, worldY = pos, int(pos.X), int(pos.Y)
 
 			cameraX = 2*float64(x)/float64(width) - 1
@@ -203,6 +216,7 @@ func RenderEnemies(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 				math.Sqrt(1.0+(rayDir.X*rayDir.X)/(rayDir.Y*rayDir.Y)),
 			)
 		)
+
 		if rayDir.X < 0 {
 			step.X = -1
 			sideDist.X = (rayPos.X - float64(worldX)) * deltaDist.X
@@ -228,6 +242,7 @@ func RenderEnemies(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 				worldY += step.Y
 				side = true
 			}
+
 			if w.World[worldX][worldY] > 0 {
 				hit = true
 			}
@@ -235,6 +250,9 @@ func RenderEnemies(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 			if w.Enemies[worldX][worldY] > 0 {
 				hit = true
 				ehit = true
+				if assetInitialSides[worldX][worldY] == -1 {
+					assetInitialSides[worldX][worldY] = b2i(side)
+				}
 			}
 		}
 
@@ -257,12 +275,15 @@ func RenderEnemies(width, height int, dir, pos, plane pixel.Vec) *image.RGBA {
 		drawStart := -lineHeight/2 + height/2
 
 		drawEnd := lineHeight/2 + height/2
-		if drawEnd >= height {
-			drawEnd = height - 1
-		}
 
 		texNum := 8
-		if ehit {
+		initSide := false
+
+		if assetInitialSides[worldX][worldY] == 1 {
+			initSide = true
+		}
+
+		if ehit && initSide == side {
 			for y := drawStart; y < drawEnd+1; y++ {
 				if lineHeight > 0 {
 					d := y*256 - height*128 + lineHeight*128
