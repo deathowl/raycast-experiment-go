@@ -8,6 +8,7 @@ import (
 	"image/draw"
 	"time"
 
+	ai "github.com/deathowl/raycast-experiment-go/enemies"
 	"github.com/deathowl/raycast-experiment-go/player"
 	"github.com/deathowl/raycast-experiment-go/renderer"
 	"github.com/deathowl/raycast-experiment-go/world"
@@ -154,6 +155,7 @@ func run() {
 
 	last := time.Now()
 	minimaprefresh := time.Now()
+	aiTicked := time.Now()
 	minimapInit := true
 	var lastM *pixel.PictureData
 
@@ -242,6 +244,11 @@ func run() {
 		}
 		if win.JustPressed(pixelgl.MouseButtonRight) {
 			as.execute()
+		}
+		shouldTick := time.Since(aiTicked).Seconds() > .4
+		if shouldTick {
+			ai.Tick(pos)
+			aiTicked = time.Now()
 		}
 		p := pixel.PictureDataFromImage(renderer.RenderBackground(width, height, dir, pos, plane))
 
