@@ -71,10 +71,10 @@ func Tick(pos pixel.Vec) {
 					if int(pos.X) > x {
 						newX = x + 1
 					}
-					if int(pos.Y) > x {
+					if int(pos.Y) > y {
 						newY = y + 1
 					}
-					if int(pos.X) < y {
+					if int(pos.X) < x {
 						newX = x - 1
 					}
 					if int(pos.Y) < y {
